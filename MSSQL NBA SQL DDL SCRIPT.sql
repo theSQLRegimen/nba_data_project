@@ -133,7 +133,8 @@ GO
 
 CREATE TABLE dbo.player_stats_individual (
     player_id INT NOT NULL,
-    game_date varchar(50) NOT NULL,
+    game_description VARCHAR(250) NULL,
+    game_date DATE NULL,
     pts INT NULL,
     rebounds INT  NULL,
     steals INT NULL,
@@ -142,7 +143,7 @@ CREATE TABLE dbo.player_stats_individual (
     "3point_attempts" INT NULL,
     "3point_made" INT NULL,
     minutes_played TIME NULL,
-    game_description VARCHAR(250) NULL,
+    
     CONSTRAINT fk_player_stats_nba_players2 
         FOREIGN KEY (player_id) 
         REFERENCES dbo.nba_players(player_id)
