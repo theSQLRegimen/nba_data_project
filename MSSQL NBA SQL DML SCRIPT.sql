@@ -25,7 +25,7 @@ select home.team_name as 'Home Team',
 from [nba_stat].[dbo].[game_schedule] game
 left join [nba_stat].[dbo].[nba_teams] home on game.nba_team_home_id = home.team_id
 left join [nba_stat].[dbo].[nba_teams] away on game.nba_teams_away_id = away.team_id
-where game_date = '2026-01-12'
+where game_date = '2026-01-14'
 
 
 
@@ -44,7 +44,7 @@ left join [nba_stat].[dbo].[nba_teams] away on game.nba_teams_away_id = away.tea
 left join [nba_stat].[dbo].[nba_players] players on players.nba_team_id = home.team_id or players.nba_team_id = away.team_id
 left join [nba_stat].[dbo].[nba_teams] teams on players.nba_team_id = teams.team_id
 
-where game_date = '2026-01-12'
+where game_date = '2026-01-14'
 
 order by home.team_name
 
@@ -64,7 +64,7 @@ LEFT JOIN [nba_stat].[dbo].[nba_teams] away
     ON game.nba_teams_away_id = away.team_id
 LEFT JOIN [nba_stat].[dbo].[nba_players] players 
     ON players.nba_team_id = home.team_id
-WHERE game.game_date = '2026-01-12'
+WHERE game.game_date = '2026-01-14'
 
 UNION ALL
 
@@ -83,11 +83,11 @@ LEFT JOIN [nba_stat].[dbo].[nba_teams] away
     ON game.nba_teams_away_id = away.team_id
 LEFT JOIN [nba_stat].[dbo].[nba_players] players 
     ON players.nba_team_id = away.team_id
-WHERE game.game_date = '2026-01-12'
+WHERE game.game_date = '2026-01-14'
 
 ORDER BY 1, 6
 
-/*4 Of all the players playing on a particular day who has the most average points for that particular team*/
+/*4 Of all the players playing on a particular day who has the most average points for that particular team and the second most per team*/
 
 WITH PlayerPointsTop AS (
 SELECT 
@@ -111,7 +111,7 @@ LEFT JOIN [nba_stat].[dbo].[nba_teams] away
 LEFT JOIN [nba_stat].[dbo].[nba_players] players 
     ON players.nba_team_id = home.team_id
 LEFT JOIN [nba_stat].[dbo].[player_stats_agg] stat on players.player_id = stat.player_id
-WHERE game.game_date = '2026-01-12'
+WHERE game.game_date = '2026-01-14'
 
 union 
 
@@ -135,11 +135,36 @@ LEFT JOIN [nba_stat].[dbo].[nba_teams] away
 LEFT JOIN [nba_stat].[dbo].[nba_players] players 
     ON players.nba_team_id = away.team_id
 LEFT JOIN [nba_stat].[dbo].[player_stats_agg] stat on players.player_id = stat.player_id
-WHERE game.game_date = '2026-01-12'
+WHERE game.game_date = '2026-01-14'
 )
 
 select * from PlayerPointsTop
-where Points_Rank = 1
-order by Team_ID_Combined, points desc
+where Points_Rank in (1,2)
+order by 4, 7 asc 
+
+/*5. Number of times a Player over a particlar number amount*/
+
+WITH PlayerCount AS (
+
+select players.player_id , players.first_name, players.last_name, count(*) as 'Counts_Above_Value'   
+from [nba_stat].[dbo].[nba_players] players
+left join [nba_stat].[dbo].[nba_teams] teams on players.nba_team_id = teams.team_id
+left join  [nba_stat].[dbo].[player_stats_individual] stat_player on players.player_id = stat_player.player_id
+where pts > 25
+group by players.player_id, first_name, last_name
+),
+
+PlayerCountTotal AS (
+select players.player_id, players.first_name, players.last_name, count(*) as 'Total_Count'   
+from [nba_stat].[dbo].[nba_players] players
+left join [nba_stat].[dbo].[nba_teams] teams on players.nba_team_id = teams.team_id
+left join  [nba_stat].[dbo].[player_stats_individual] stat_player on players.player_id = stat_player.player_id
+group by players.player_id, first_name, last_name
+)
+
+select pc.player_id, pc.first_name, pc.last_name, pc.Counts_Above_value, pct.Total_Count, (CAST(pc.Counts_Above_value AS DECIMAL(10, 2)) / CAST(pct.Total_Count AS DECIMAL(10, 2)) * 100) as pct from PlayerCount pc
+left join PlayerCountTotal pct on pc.player_id = pct.player_id
+order by 6 desc
+
 
 
